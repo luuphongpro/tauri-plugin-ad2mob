@@ -53,7 +53,7 @@ export async function on<E extends AdMobEventName>(
   handler: (payload: AdMobEventMap[E]) => void,
 ): Promise<Unlisten> {
   if (await usesPluginChannel()) {
-    const listener = await addPluginListener<AdMobEventMap[E]>('admob', event, handler)
+    const listener = await addPluginListener<AdMobEventMap[E]>('ad2mob', event, handler)
     return async () => {
       await listener.unregister()
     }
