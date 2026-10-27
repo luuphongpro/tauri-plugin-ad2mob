@@ -43,6 +43,13 @@ class LoadAdArgs {
     var adUnitId: String? = null
 }
 
+/** Arguments of `showRewarded`. */
+@InvokeArg
+class ShowRewardedArgs {
+    var userId: String? = null
+    var customData: String? = null
+}
+
 /** Arguments of `showBanner`. */
 @InvokeArg
 class ShowBannerArgs {

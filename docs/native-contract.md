@@ -92,9 +92,13 @@ trigger `*-loaded` `{ adUnitId }`, resolve. On failure trigger `*-failed`
 with `stage: "load"`, reject `{ code: "LOAD_FAILED", message }`.
 
 ### `showInterstitial` / `showRewarded`
-Args: none. No stored ad → reject `{ code: "AD_NOT_READY", message }`.
+Args:
+- `showInterstitial`: none.
+- `showRewarded`: optional `{ userId?: string, customData?: string }` for Server-Side Verification (SSV).
+No stored ad → reject `{ code: "AD_NOT_READY", message }`.
 Register the full-screen-content callbacks BEFORE showing, then show on the
-main thread. presented → trigger `*-opened` (+ `*-impression`, `*-clicked` as
+main thread. If `userId` or `customData` are provided, configure server-side verification options on the ad before showing.
+presented → trigger `*-opened` (+ `*-impression`, `*-clicked` as
 the SDK reports). reward (rewarded only) → the SDK reward callback triggers
 `admob://rewarded-earned` `{ adUnitId?, amount, type }` — never synthesized
 from dismissal. dismissed → trigger `*-closed` and resolve. failed to present →

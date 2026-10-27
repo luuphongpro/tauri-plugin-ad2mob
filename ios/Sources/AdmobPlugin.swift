@@ -26,6 +26,12 @@ struct LoadAdArgs: Decodable {
   let adUnitId: String?
 }
 
+/// `showRewarded` arguments (`{ userId, customData }`).
+struct ShowRewardedArgs: Decodable {
+  let userId: String?
+  let customData: String?
+}
+
 /// `showBanner` arguments (`{ adUnitId, position, size }`).
 struct ShowBannerArgs: Decodable {
   let adUnitId: String?
@@ -211,6 +217,12 @@ class AdmobPlugin: Plugin {
   /// Presents the stored rewarded ad; resolves when the user dismisses it.
   /// Rewards arrive through the `admob://rewarded-earned` event only.
   @objc public func showRewarded(_ invoke: Invoke) throws {
+    guard let args = decodeArgs(ShowRewardedArgs.self, command: "showRewarded", invoke: invoke) else {
+      return
+    }
+    let userId = args.userId
+    let customData = args.customData
+
     DispatchQueue.main.async { [weak self] in
       guard let self else {
         invoke.reject("plugin deallocated", code: "NATIVE_ERROR")
@@ -220,7 +232,7 @@ class AdmobPlugin: Plugin {
         invoke.reject("the plugin is not initialized; call initialize first", code: "NOT_INITIALIZED")
         return
       }
-      self.rewardedManager.show(invoke: invoke)
+      self.rewardedManager.show(userId: userId, customData: customData, invoke: invoke)
     }
   }
 

@@ -74,7 +74,10 @@ impl<R: Runtime> Admob<R> {
         Self::unsupported()
     }
 
-    pub async fn show_rewarded(&self) -> Result<()> {
+    pub async fn show_rewarded(
+        &self,
+        _payload: crate::models::NativeShowRewardedPayload,
+    ) -> Result<()> {
         Self::unsupported()
     }
 

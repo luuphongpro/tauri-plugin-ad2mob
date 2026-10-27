@@ -210,6 +210,16 @@ pub enum BannerSize {
     Adaptive,
 }
 
+/// Payload of `showRewarded`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ShowRewardedOptions {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_data: Option<String>,
+}
+
 /// Payload of `showBanner`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -438,6 +448,16 @@ pub struct NativeInitializeResult {
 #[serde(rename_all = "camelCase")]
 pub struct NativeLoadAdPayload {
     pub ad_unit_id: String,
+}
+
+/// Payload of the native `showRewarded` call.
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NativeShowRewardedPayload {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_data: Option<String>,
 }
 
 /// Payload of the native `showBanner` call.

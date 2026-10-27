@@ -260,13 +260,20 @@ const unlisten = await AdMob.on("admob://rewarded-earned", ({ payload }) => {
 
 await AdMob.loadRewarded();
 if (await AdMob.isRewardedReady()) {
-  await AdMob.showRewarded();            // resolves when dismissed
+  // Optional Server-Side Verification (SSV) parameters:
+  await AdMob.showRewarded({
+    userId: "user-12345",
+    customData: "level_5_reward",
+  }); // resolves when dismissed
 }
 // unlisten(); when done
 ```
 
 Rewards are only reported by the SDK's own reward callback. Dismissing the ad
 without earning it emits `admob://rewarded-closed` but never a reward.
+When `userId` or `customData` are provided, the plugin configures the AdMob SDK
+Server-Side Verification (SSV) options so your backend verification callback receives
+the corresponding `user_id` and `custom_data` parameters.
 
 ### Native banner
 
@@ -420,7 +427,7 @@ not change your desktop build dependencies.
 | `AdMob.isInterstitialReady()` | `boolean` |
 | `AdMob.destroyInterstitial()` | `void` |
 | `AdMob.loadRewarded(options?)` | `void` (resolves when loaded) |
-| `AdMob.showRewarded()` | `void` (resolves when dismissed) |
+| `AdMob.showRewarded(options?)` | `void` (resolves when dismissed) |
 | `AdMob.isRewardedReady()` | `boolean` |
 | `AdMob.destroyRewarded()` | `void` |
 | `AdMob.showBanner(options?)` | `void` (resolves when loaded) |

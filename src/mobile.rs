@@ -15,7 +15,7 @@ use crate::error::Result;
 use crate::models::{
     BannerPosition, NativeConsentResult, NativeInitializePayload, NativeInitializeResult,
     NativeLoadAdPayload, NativeSetBannerPositionPayload, NativeShowBannerPayload,
-    NativeTrackingResult,
+    NativeShowRewardedPayload, NativeTrackingResult,
 };
 
 #[cfg(target_os = "android")]
@@ -93,8 +93,8 @@ impl<R: Runtime> Admob<R> {
             .await
     }
 
-    pub async fn show_rewarded(&self) -> Result<()> {
-        self.call_unit("showRewarded", ()).await
+    pub async fn show_rewarded(&self, payload: NativeShowRewardedPayload) -> Result<()> {
+        self.call_unit("showRewarded", payload).await
     }
 
     pub async fn destroy_rewarded(&self) -> Result<()> {

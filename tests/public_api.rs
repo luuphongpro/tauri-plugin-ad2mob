@@ -6,7 +6,7 @@
 
 use tauri_plugin_ad2mob::{
     test_ids, validate, AdFormat, AdMobConfig, AdMobStatus, AdUnitIds, BannerPosition, BannerSize,
-    ConsentStatus, Error, Platform, TrackingAuthorizationStatus,
+    ConsentStatus, Error, Platform, ShowRewardedOptions, TrackingAuthorizationStatus,
 };
 
 #[test]
@@ -58,6 +58,21 @@ fn banner_options_use_documented_strings() {
 
     // unknown strings are rejected instead of being forwarded to the SDK
     assert!(serde_json::from_value::<BannerSize>(serde_json::json!("huge")).is_err());
+}
+
+#[test]
+fn rewarded_options_roundtrip_through_json() {
+    let opts: ShowRewardedOptions = serde_json::from_value(serde_json::json!({
+        "userId": "user-12345",
+        "customData": "custom-payload"
+    }))
+    .unwrap();
+    assert_eq!(opts.user_id.as_deref(), Some("user-12345"));
+    assert_eq!(opts.custom_data.as_deref(), Some("custom-payload"));
+
+    let empty: ShowRewardedOptions = serde_json::from_value(serde_json::json!({})).unwrap();
+    assert_eq!(empty.user_id, None);
+    assert_eq!(empty.custom_data, None);
 }
 
 #[test]

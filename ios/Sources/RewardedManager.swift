@@ -93,7 +93,7 @@ final class RewardedManager: NSObject, GADRewardedAdDelegate {
 
   /// Presents the stored rewarded ad. Rejects `AD_NOT_READY` when nothing is
   /// loaded. Called on the main queue.
-  func show(invoke: Invoke) {
+  func show(userId: String? = nil, customData: String? = nil, invoke: Invoke) {
     guard let rewarded = self.rewarded else {
       invoke.reject("no rewarded ad is loaded; call loadRewarded first", code: "AD_NOT_READY")
       return
@@ -106,6 +106,19 @@ final class RewardedManager: NSObject, GADRewardedAdDelegate {
       invoke.reject(
         "no root view controller available to present the rewarded ad", code: "NATIVE_ERROR")
       return
+    }
+
+    let hasUserId = userId != nil && !userId!.isEmpty
+    let hasCustomData = customData != nil && !customData!.isEmpty
+    if hasUserId || hasCustomData {
+      let ssvOptions = GADServerSideVerificationOptions()
+      if let userId, !userId.isEmpty {
+        ssvOptions.userIdentifier = userId
+      }
+      if let customData, !customData.isEmpty {
+        ssvOptions.customRewardString = customData
+      }
+      rewarded.serverSideVerificationOptions = ssvOptions
     }
 
     pendingShowInvoke = invoke

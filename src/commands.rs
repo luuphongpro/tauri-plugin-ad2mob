@@ -13,11 +13,11 @@ use crate::error::Result;
 #[cfg(desktop)]
 use crate::models::{events, InitializedEvent};
 #[cfg(mobile)]
-use crate::models::{AdFormat, NativeShowBannerPayload};
+use crate::models::{AdFormat, NativeShowBannerPayload, NativeShowRewardedPayload};
 use crate::models::{
     AdMobConfig, AdMobStatus, ConfigureOptions, ConsentResult, InitializationResult, LoadAdOptions,
     NativeInitializePayload, Platform, SetBannerPositionOptions, ShowBannerOptions,
-    TrackingAuthorizationResult,
+    ShowRewardedOptions, TrackingAuthorizationResult,
 };
 use crate::state::SharedState;
 use crate::AdMobExt;
@@ -362,10 +362,11 @@ pub(crate) async fn load_rewarded<R: Runtime>(
 pub(crate) async fn show_rewarded<R: Runtime>(
     app: AppHandle<R>,
     state: State<'_, SharedState>,
+    options: Option<ShowRewardedOptions>,
 ) -> Result<()> {
     #[cfg(desktop)]
     {
-        let _ = (&app, &state);
+        let _ = (&app, &state, &options);
         Err(crate::Error::unsupported_current_platform())
     }
 
@@ -378,9 +379,15 @@ pub(crate) async fn show_rewarded<R: Runtime>(
             inner.rewarded.begin_show()?;
         }
 
+        let opts = options.unwrap_or_default();
+        let payload = NativeShowRewardedPayload {
+            user_id: opts.user_id,
+            custom_data: opts.custom_data,
+        };
+
         // Resolves once the ad has been dismissed. The reward itself is always
         // delivered through `admob://rewarded-earned` from the SDK callback.
-        match app.admob().show_rewarded().await {
+        match app.admob().show_rewarded(payload).await {
             Ok(()) => {
                 state.lock().rewarded.on_dismissed();
                 Ok(())

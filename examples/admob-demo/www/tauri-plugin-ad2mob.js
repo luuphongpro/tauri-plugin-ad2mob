@@ -49,8 +49,8 @@ class Channel {
         __classPrivateFieldGet(this, _Channel_onmessage, "f").call(this, message);
         __classPrivateFieldSet(this, _Channel_nextMessageIndex, __classPrivateFieldGet(this, _Channel_nextMessageIndex, "f") + 1, "f");
         while (__classPrivateFieldGet(this, _Channel_nextMessageIndex, "f") in __classPrivateFieldGet(this, _Channel_pendingMessages, "f")) {
-          const message2 = __classPrivateFieldGet(this, _Channel_pendingMessages, "f")[__classPrivateFieldGet(this, _Channel_nextMessageIndex, "f")];
-          __classPrivateFieldGet(this, _Channel_onmessage, "f").call(this, message2);
+          const message = __classPrivateFieldGet(this, _Channel_pendingMessages, "f")[__classPrivateFieldGet(this, _Channel_nextMessageIndex, "f")];
+          __classPrivateFieldGet(this, _Channel_onmessage, "f").call(this, message);
           delete __classPrivateFieldGet(this, _Channel_pendingMessages, "f")[__classPrivateFieldGet(this, _Channel_nextMessageIndex, "f")];
           __classPrivateFieldSet(this, _Channel_nextMessageIndex, __classPrivateFieldGet(this, _Channel_nextMessageIndex, "f") + 1, "f");
         }
@@ -143,23 +143,23 @@ function toAdMobError(error) {
 
 // node_modules/@tauri-apps/api/event.js
 var TauriEvent;
-(function(TauriEvent2) {
-  TauriEvent2["WINDOW_RESIZED"] = "tauri://resize";
-  TauriEvent2["WINDOW_MOVED"] = "tauri://move";
-  TauriEvent2["WINDOW_CLOSE_REQUESTED"] = "tauri://close-requested";
-  TauriEvent2["WINDOW_DESTROYED"] = "tauri://destroyed";
-  TauriEvent2["WINDOW_FOCUS"] = "tauri://focus";
-  TauriEvent2["WINDOW_BLUR"] = "tauri://blur";
-  TauriEvent2["WINDOW_SCALE_FACTOR_CHANGED"] = "tauri://scale-change";
-  TauriEvent2["WINDOW_THEME_CHANGED"] = "tauri://theme-changed";
-  TauriEvent2["WINDOW_CREATED"] = "tauri://window-created";
-  TauriEvent2["WINDOW_SUSPENDED"] = "tauri://suspended";
-  TauriEvent2["WINDOW_RESUMED"] = "tauri://resumed";
-  TauriEvent2["WEBVIEW_CREATED"] = "tauri://webview-created";
-  TauriEvent2["DRAG_ENTER"] = "tauri://drag-enter";
-  TauriEvent2["DRAG_OVER"] = "tauri://drag-over";
-  TauriEvent2["DRAG_DROP"] = "tauri://drag-drop";
-  TauriEvent2["DRAG_LEAVE"] = "tauri://drag-leave";
+(function(TauriEvent) {
+  TauriEvent["WINDOW_RESIZED"] = "tauri://resize";
+  TauriEvent["WINDOW_MOVED"] = "tauri://move";
+  TauriEvent["WINDOW_CLOSE_REQUESTED"] = "tauri://close-requested";
+  TauriEvent["WINDOW_DESTROYED"] = "tauri://destroyed";
+  TauriEvent["WINDOW_FOCUS"] = "tauri://focus";
+  TauriEvent["WINDOW_BLUR"] = "tauri://blur";
+  TauriEvent["WINDOW_SCALE_FACTOR_CHANGED"] = "tauri://scale-change";
+  TauriEvent["WINDOW_THEME_CHANGED"] = "tauri://theme-changed";
+  TauriEvent["WINDOW_CREATED"] = "tauri://window-created";
+  TauriEvent["WINDOW_SUSPENDED"] = "tauri://suspended";
+  TauriEvent["WINDOW_RESUMED"] = "tauri://resumed";
+  TauriEvent["WEBVIEW_CREATED"] = "tauri://webview-created";
+  TauriEvent["DRAG_ENTER"] = "tauri://drag-enter";
+  TauriEvent["DRAG_OVER"] = "tauri://drag-over";
+  TauriEvent["DRAG_DROP"] = "tauri://drag-drop";
+  TauriEvent["DRAG_LEAVE"] = "tauri://drag-leave";
 })(TauriEvent || (TauriEvent = {}));
 async function _unlisten(event, eventId) {
   window.__TAURI_EVENT_PLUGIN_INTERNALS__.unregisterListener(event, eventId);
@@ -255,8 +255,8 @@ var AdMob = {
   loadRewarded(options) {
     return call("load_rewarded", { options: options ?? {} });
   },
-  showRewarded() {
-    return call("show_rewarded");
+  showRewarded(options) {
+    return call("show_rewarded", { options: options ?? {} });
   },
   isRewardedReady() {
     return call("is_rewarded_ready");
@@ -288,9 +288,9 @@ var AdMob = {
 };
 var guest_js_default = AdMob;
 export {
-  toAdMobError,
-  isAdMobError,
-  guest_js_default as default,
+  AdMob,
   AdMobError,
-  AdMob
+  guest_js_default as default,
+  isAdMobError,
+  toAdMobError
 };

@@ -23,6 +23,7 @@ import type {
   LoadAdOptions,
   SetBannerPositionOptions,
   ShowBannerOptions,
+  ShowRewardedOptions,
   TrackingAuthorizationResult,
   TrackingAuthorizationStatus,
 } from './types.js'
@@ -139,9 +140,11 @@ export const AdMob = {
    * Shows a previously loaded rewarded ad. Resolves once the user dismissed
    * the ad; the reward is delivered through the `admob://rewarded-earned`
    * event from the real SDK callback.
+   *
+   * @param options Optional parameters such as `userId` and `customData` for Server-Side Verification (SSV).
    */
-  showRewarded(): Promise<void> {
-    return call<void>('show_rewarded')
+  showRewarded(options?: ShowRewardedOptions): Promise<void> {
+    return call<void>('show_rewarded', { options: options ?? {} })
   },
 
   /** `true` when a rewarded ad is loaded and ready to show. */

@@ -383,7 +383,7 @@ if (status === "authorized") {
       },
       {
         name: "showRewarded",
-        signature: "showRewarded()",
+        signature: "showRewarded(options?)",
         returns: "Promise<void>",
         desc: (
           <>

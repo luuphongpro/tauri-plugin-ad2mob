@@ -14,6 +14,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.google.android.gms.ads.rewarded.ServerSideVerificationOptions
 
 /** Value of the `stage` field of `*-failed` events for load failures. */
 private const val STAGE_LOAD = "load"
@@ -283,7 +284,7 @@ internal class RewardedManager(
      * (`OnUserEarnedRewardListener`) through the `admob://rewarded-earned`
      * event — never synthesized from the dismissal.
      */
-    fun show(invoke: Invoke) {
+    fun show(userId: String? = null, customData: String? = null, invoke: Invoke) {
         val current = loaded
         if (current == null) {
             invoke.reject("no rewarded ad loaded", AdmobRejectCodes.AD_NOT_READY)
@@ -296,6 +297,17 @@ internal class RewardedManager(
 
         isShowing = true
         val (currentAd, currentAdUnitId) = current
+
+        if (!userId.isNullOrEmpty() || !customData.isNullOrEmpty()) {
+            val optionsBuilder = ServerSideVerificationOptions.Builder()
+            if (!userId.isNullOrEmpty()) {
+                optionsBuilder.setUserId(userId)
+            }
+            if (!customData.isNullOrEmpty()) {
+                optionsBuilder.setCustomData(customData)
+            }
+            currentAd.setServerSideVerificationOptions(optionsBuilder.build())
+        }
 
         currentAd.fullScreenContentCallback = buildFullScreenCallback(
             onOpened = {

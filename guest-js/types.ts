@@ -55,6 +55,20 @@ export interface LoadAdOptions {
   adUnitId?: string
 }
 
+/** Options of `AdMob.showRewarded()`. */
+export interface ShowRewardedOptions {
+  /**
+   * Optional user identifier for server-side verification (SSV).
+   * Passed to AdMob SDK to populate the `user_id` query parameter in SSV callbacks.
+   */
+  userId?: string
+  /**
+   * Optional custom data string for server-side verification (SSV).
+   * Passed to AdMob SDK to populate the `custom_data` query parameter in SSV callbacks.
+   */
+  customData?: string
+}
+
 /** Position of the native banner relative to the WebView. */
 export type BannerPosition = 'top' | 'bottom'
 

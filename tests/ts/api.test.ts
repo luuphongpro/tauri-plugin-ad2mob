@@ -68,6 +68,24 @@ describe('interstitial and rewarded flows', () => {
     expect(invokeMock).toHaveBeenNthCalledWith(3, 'plugin:ad2mob|show_interstitial', undefined)
   })
 
+  it('loads and shows a rewarded ad with optional SSV parameters', async () => {
+    invokeMock.mockResolvedValue(null)
+    await AdMob.loadRewarded()
+    expect(invokeMock).toHaveBeenNthCalledWith(1, 'plugin:ad2mob|load_rewarded', {
+      options: {},
+    })
+
+    await AdMob.showRewarded()
+    expect(invokeMock).toHaveBeenNthCalledWith(2, 'plugin:ad2mob|show_rewarded', {
+      options: {},
+    })
+
+    await AdMob.showRewarded({ userId: 'user-123', customData: 'level-42' })
+    expect(invokeMock).toHaveBeenNthCalledWith(3, 'plugin:ad2mob|show_rewarded', {
+      options: { userId: 'user-123', customData: 'level-42' },
+    })
+  })
+
   it('queries readiness without arguments', async () => {
     invokeMock.mockResolvedValue(true)
     await expect(AdMob.isInterstitialReady()).resolves.toBe(true)

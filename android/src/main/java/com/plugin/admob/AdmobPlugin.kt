@@ -144,7 +144,8 @@ class AdmobPlugin(private val activity: Activity) : Plugin(activity) {
     /** Shows the stored rewarded ad; resolves once it is dismissed. */
     @Command
     fun showRewarded(invoke: Invoke) {
-        activity.runOnUiThread { rewardedManager.show(invoke) }
+        val args = invoke.parseArgs(ShowRewardedArgs::class.java)
+        activity.runOnUiThread { rewardedManager.show(args.userId, args.customData, invoke) }
     }
 
     /** Clears the stored rewarded ad and listeners. */
