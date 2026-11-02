@@ -20,7 +20,7 @@ final class TrackingManager {
   func currentStatus() -> String {
     if #available(iOS 14, *) {
       return AdmobMappers.trackingStatus(
-        fromAttRawValue: ATTrackingManager.trackingAuthorizationStatus.rawValue)
+        fromAttRawValue: Int(ATTrackingManager.trackingAuthorizationStatus.rawValue))
     }
     return AdmobMappers.trackingStatus(fromAttRawValue: nil)
   }
@@ -30,7 +30,7 @@ final class TrackingManager {
   func requestAuthorization(completion: @escaping (_ status: String) -> Void) {
     if #available(iOS 14, *) {
       ATTrackingManager.requestTrackingAuthorization { status in
-        let normalized = AdmobMappers.trackingStatus(fromAttRawValue: status.rawValue)
+        let normalized = AdmobMappers.trackingStatus(fromAttRawValue: Int(status.rawValue))
         // The completion may arrive off the main queue; the prompt result is
         // UI-related state, so hop before reporting.
         DispatchQueue.main.async {
