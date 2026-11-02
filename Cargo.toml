@@ -60,7 +60,6 @@ tauri-plugin = { version = "2", features = ["build"] }
 
 [lib]
 name = "tauri_plugin_ad2mob"
-crate-type = ["staticlib", "cdylib", "rlib"]
 
 [workspace]
 exclude = ["examples/admob-demo/src-tauri"]

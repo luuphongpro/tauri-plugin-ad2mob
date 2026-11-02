@@ -170,9 +170,7 @@ mod ios_support {
                         continue;
                     }
 
-                    let dest_archive = out_dir.join(format!("lib{fw_name}.a"));
-                    extract_thin_static_archive(&binary_path, &dest_archive, arch);
-                    println!("cargo:rustc-link-lib=static:+whole-archive={fw_name}");
+                    link_framework_binary(&binary_path, &out_dir, fw_name, arch);
                 }
             }
         }
@@ -207,23 +205,29 @@ mod ios_support {
         }
     }
 
-    fn extract_thin_static_archive(binary_path: &Path, dest_archive: &Path, arch: &str) {
-        let output = Command::new("lipo")
-            .arg("-archs")
-            .arg(binary_path)
-            .output()
-            .expect("failed to execute `lipo -archs`");
+    fn link_framework_binary(binary_path: &Path, out_dir: &Path, fw_name: &str, arch: &str) {
+        let header = read_header_bytes(binary_path);
 
-        let archs_str = String::from_utf8_lossy(&output.stdout);
-        let archs: Vec<&str> = archs_str.split_whitespace().collect();
+        // 1. If the binary has a Mach-O Universal (fat) header (0xCAFEBABE / 0xCAFEBABF),
+        //    strip the fat container with `lipo -thin <arch>` even when it only holds 1 arch.
+        let is_fat = matches!(
+            header.get(0..4),
+            Some(
+                [0xCA, 0xFE, 0xBA, 0xBE]
+                    | [0xBE, 0xBA, 0xFE, 0xCA]
+                    | [0xCA, 0xFE, 0xBA, 0xBF]
+                    | [0xBF, 0xBA, 0xFE, 0xCA]
+            )
+        );
 
-        if archs.len() > 1 {
+        let thin_path = if is_fat {
+            let thinned = out_dir.join(format!("{fw_name}.{arch}.thin"));
             let status = Command::new("lipo")
                 .arg(binary_path)
                 .arg("-thin")
                 .arg(arch)
                 .arg("-output")
-                .arg(dest_archive)
+                .arg(&thinned)
                 .status()
                 .expect("failed to execute `lipo -thin`");
             assert!(
@@ -231,15 +235,65 @@ mod ios_support {
                 "`lipo -thin {arch}` failed for {}",
                 binary_path.display()
             );
+            thinned
         } else {
-            fs::copy(binary_path, dest_archive).unwrap_or_else(|e| {
-                panic!(
-                    "failed to copy {} to {}: {e}",
-                    binary_path.display(),
+            binary_path.to_path_buf()
+        };
+
+        let thin_header = read_header_bytes(&thin_path);
+        let dest_archive = out_dir.join(format!("lib{fw_name}.a"));
+
+        // 2. Inspect the thin binary format:
+        //    - `!<arch>\n`: standard Unix static archive -> copy directly to `lib<fw_name>.a`.
+        //    - `0xFEEDFACF` (`MH_MAGIC_64`):
+        //      - filetype 1 (`MH_OBJECT`, single-object prelink `ld -r`) -> wrap in `ar crs lib<fw_name>.a <fw_name>.o`.
+        //      - filetype 6 (`MH_DYLIB`, dynamic framework) -> link via `framework=<fw_name>`.
+        if thin_header.starts_with(b"!<arch>\n") {
+            if thin_path != dest_archive {
+                fs::copy(&thin_path, &dest_archive).expect("failed to copy thin static archive");
+            }
+            println!("cargo:rustc-link-lib=static:+whole-archive={fw_name}");
+        } else if thin_header.get(0..4) == Some(&[0xCF, 0xFA, 0xED, 0xFE]) && thin_header.len() >= 16 {
+            let filetype = u32::from_le_bytes([
+                thin_header[12],
+                thin_header[13],
+                thin_header[14],
+                thin_header[15],
+            ]);
+            if filetype == 1 {
+                // MH_OBJECT: single relocatable object file; pack into a standard `!<arch>\n` archive.
+                let obj_path = out_dir.join(format!("{fw_name}.o"));
+                fs::copy(&thin_path, &obj_path).expect("failed to copy MH_OBJECT to .o");
+                let _ = fs::remove_file(&dest_archive);
+                let status = Command::new("ar")
+                    .arg("crs")
+                    .arg(&dest_archive)
+                    .arg(&obj_path)
+                    .status()
+                    .expect("failed to run `ar crs`");
+                assert!(
+                    status.success(),
+                    "`ar crs` failed for {}",
                     dest_archive.display()
-                )
-            });
+                );
+                println!("cargo:rustc-link-lib=static:+whole-archive={fw_name}");
+            } else {
+                // MH_DYLIB or other Mach-O image: link as framework.
+                println!("cargo:rustc-link-lib=framework={fw_name}");
+            }
+        } else {
+            println!("cargo:rustc-link-lib=framework={fw_name}");
         }
+    }
+
+    fn read_header_bytes(path: &Path) -> Vec<u8> {
+        use std::io::Read;
+        let mut file = fs::File::open(path)
+            .unwrap_or_else(|e| panic!("failed to open {}: {e}", path.display()));
+        let mut buf = vec![0u8; 16];
+        let n = file.read(&mut buf).unwrap_or(0);
+        buf.truncate(n);
+        buf
     }
 
     fn set_framework_paths_env(paths: &[PathBuf]) {
