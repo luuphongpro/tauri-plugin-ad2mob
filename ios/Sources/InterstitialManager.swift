@@ -129,7 +129,7 @@ final class InterstitialManager: NSObject, GADFullScreenContentDelegate {
     }
   }
 
-  func adDidPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+  func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
     DispatchQueue.main.async { [weak self] in
       self?.triggerEvent(AdmobEvents.INTERSTITIAL_OPENED)
       self?.plugin?.logDebug("interstitial presented")

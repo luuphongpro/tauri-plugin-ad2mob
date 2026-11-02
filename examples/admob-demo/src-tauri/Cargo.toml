@@ -17,8 +17,3 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 tauri-plugin-ad2mob = { path = "../../.." }
 serde_json = "1"
-
-[patch.crates-io]
-swift-rs = { git = "ssh://git@github.com/marrionesa/swift-rs-framework-fix.git", rev = "520ee150187e787eb3488733d50dd2c2743ad65f" }
-tauri-utils = { git = "ssh://git@github.com/marrionesa/tauri-utils-framework-fix.git", rev = "f19fe580d58c35df101e74a174c5d71aa083211e" }
-tauri-plugin = { git = "ssh://git@github.com/marrionesa/tauri-plugin-framework-support.git", rev = "f8c625cb39449b585f96264b447308786084c857" }

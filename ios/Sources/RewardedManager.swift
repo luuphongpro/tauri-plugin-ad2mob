@@ -16,8 +16,9 @@ import UIKit
 /// once.
 ///
 /// The reward is delivered exclusively through the real
-/// `GADRewardedAdDelegate` callback — never synthesized from dismissal.
-final class RewardedManager: NSObject, GADRewardedAdDelegate {
+/// `GADRewardedAd.present(fromRootViewController:userDidEarnRewardHandler:)`
+/// callback — never synthesized from dismissal.
+final class RewardedManager: NSObject, GADFullScreenContentDelegate {
   private weak var plugin: AdmobPlugin?
   /// Stored ad. Replaced by the newest successful load (concurrent loads are
   /// allowed), cleared on dismissal / presentation failure / destroy.
@@ -62,11 +63,7 @@ final class RewardedManager: NSObject, GADRewardedAdDelegate {
         if let ad {
           self.rewarded = ad
           // The delegate must be installed before the ad is presented.
-          // GADRewardedAdDelegate refines GADFullScreenContentDelegate, so a
-          // single delegate receives the presentation events AND the reward;
-          // setting `fullScreenContentDelegate` as well would duplicate the
-          // presentation callbacks.
-          ad.delegate = self
+          ad.fullScreenContentDelegate = self
           self.plugin?.logDebug("rewarded ad loaded")
           self.plugin?.trigger(AdmobEvents.REWARDED_LOADED, data: ["adUnitId": adUnitId])
           invoke.resolve()
@@ -122,7 +119,17 @@ final class RewardedManager: NSObject, GADRewardedAdDelegate {
     }
 
     pendingShowInvoke = invoke
-    rewarded.present(fromRootViewController: rootViewController)
+    rewarded.present(fromRootViewController: rootViewController) { [weak self] in
+      DispatchQueue.main.async {
+        guard let self else { return }
+        let reward = rewarded.adReward
+        var payload = self.eventPayload()
+        payload["amount"] = reward.amount.doubleValue
+        payload["type"] = reward.type
+        self.plugin?.trigger(AdmobEvents.REWARDED_EARNED, data: payload)
+        self.plugin?.logDebug("reward earned: \(reward.amount) \(reward.type)")
+      }
+    }
   }
 
   /// Clears the stored ad and event state. A show still on screen settles
@@ -130,26 +137,12 @@ final class RewardedManager: NSObject, GADRewardedAdDelegate {
   /// Safe when nothing was loaded. Called on the main queue.
   func destroy() {
     generation += 1
-    rewarded?.delegate = nil
+    rewarded?.fullScreenContentDelegate = nil
     rewarded = nil
     adUnitId = nil
   }
 
-  // MARK: - GADRewardedAdDelegate
-
-  /// Real SDK reward callback, fired when the user actually earns the reward.
-  func rewardedAd(_ rewardedAd: GADRewardedAd, userDidEarnReward reward: GADAdReward) {
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
-      var payload = self.eventPayload()
-      payload["amount"] = reward.amount.doubleValue
-      payload["type"] = reward.type
-      self.plugin?.trigger(AdmobEvents.REWARDED_EARNED, data: payload)
-      self.plugin?.logDebug("reward earned: \(reward.amount) \(reward.type)")
-    }
-  }
-
-  // MARK: - GADFullScreenContentDelegate (inherited by GADRewardedAdDelegate)
+  // MARK: - GADFullScreenContentDelegate
 
   func adDidRecordImpression(_ ad: GADFullScreenPresentingAd) {
     DispatchQueue.main.async { [weak self] in
@@ -163,7 +156,7 @@ final class RewardedManager: NSObject, GADRewardedAdDelegate {
     }
   }
 
-  func adDidPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+  func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
     DispatchQueue.main.async { [weak self] in
       self?.triggerEvent(AdmobEvents.REWARDED_OPENED)
       self?.plugin?.logDebug("rewarded ad presented")
@@ -173,7 +166,7 @@ final class RewardedManager: NSObject, GADRewardedAdDelegate {
   func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
-      (ad as? GADRewardedAd)?.delegate = nil
+      (ad as? GADRewardedAd)?.fullScreenContentDelegate = nil
       self.rewarded = nil
       self.triggerEvent(AdmobEvents.REWARDED_CLOSED)
       self.pendingShowInvoke?.resolve()
@@ -184,7 +177,7 @@ final class RewardedManager: NSObject, GADRewardedAdDelegate {
   func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
-      (ad as? GADRewardedAd)?.delegate = nil
+      (ad as? GADRewardedAd)?.fullScreenContentDelegate = nil
       self.rewarded = nil
       let nsError = error as NSError
       var payload = self.eventPayload()

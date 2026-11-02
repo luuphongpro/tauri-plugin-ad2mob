@@ -3,7 +3,32 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: MIT
 
+import Foundation
 import PackageDescription
+
+var swiftFlags: [String] = []
+var cFlags: [String] = []
+
+if let rawPaths = ProcessInfo.processInfo.environment["AD2MOB_IOS_FRAMEWORK_PATHS"],
+  !rawPaths.isEmpty
+{
+  for path in rawPaths.split(separator: ":").map(String.init) where !path.isEmpty {
+    swiftFlags.append(contentsOf: ["-F", path])
+    cFlags.append(contentsOf: ["-F", path])
+  }
+} else if let outDir = ProcessInfo.processInfo.environment["OUT_DIR"], !outDir.isEmpty {
+  let target = ProcessInfo.processInfo.environment["TARGET"] ?? "aarch64-apple-ios"
+  let slice = (target == "aarch64-apple-ios") ? "ios-arm64" : "ios-arm64_x86_64-simulator"
+  let artifacts = "\(outDir)/swift-rs/tauri-plugin-ad2mob/artifacts"
+  let frameworkSlices = [
+    "\(artifacts)/swift-package-manager-google-mobile-ads/GoogleMobileAds/GoogleMobileAds.xcframework/\(slice)",
+    "\(artifacts)/swift-package-manager-google-user-messaging-platform/UserMessagingPlatform/UserMessagingPlatform.xcframework/\(slice)",
+  ]
+  for path in frameworkSlices {
+    swiftFlags.append(contentsOf: ["-F", path])
+    cFlags.append(contentsOf: ["-F", path])
+  }
+}
 
 let package = Package(
   name: "tauri-plugin-ad2mob",
@@ -26,16 +51,16 @@ let package = Package(
       path: "../.tauri/tauri-api"
     ),
 
-    // Google Mobile Ads SDK (13.x).
+    // Google Mobile Ads SDK (11.x — matches the GAD* Swift API in Sources/).
     .package(
       url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git",
-      from: "13.0.0"
+      "11.2.0"..<"12.0.0"
     ),
 
-    // Google User Messaging Platform (3.x).
+    // Google User Messaging Platform (2.x — matches the UMP* Swift API in Sources/).
     .package(
       url: "https://github.com/googleads/swift-package-manager-google-user-messaging-platform.git",
-      from: "3.0.0"
+      "2.1.0"..<"3.0.0"
     )
   ],
   targets: [
@@ -54,7 +79,9 @@ let package = Package(
           package: "swift-package-manager-google-user-messaging-platform"
         )
       ],
-      path: "Sources"
+      path: "Sources",
+      cSettings: cFlags.isEmpty ? [] : [.unsafeFlags(cFlags)],
+      swiftSettings: swiftFlags.isEmpty ? [] : [.unsafeFlags(swiftFlags)]
     ),
 
     .testTarget(

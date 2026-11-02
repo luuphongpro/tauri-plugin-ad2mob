@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 
 import Foundation
-import GoogleUserMessagingPlatform
 import UIKit
+import UserMessagingPlatform
 
 /// Error surfaced by the consent flow. The message (including the UMP SDK
 /// description) is embedded into the `NATIVE_ERROR` rejection sent to Rust —
@@ -41,7 +41,7 @@ final class ConsentManager: NSObject {
           return
         }
 
-        UMPConsentForm.loadAndShowIfRequired(from: viewController) { formError in
+        UMPConsentForm.loadAndPresentIfRequired(from: viewController) { formError in
           DispatchQueue.main.async {
             if let formError {
               completion(
